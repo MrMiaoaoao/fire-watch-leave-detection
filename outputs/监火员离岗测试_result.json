@@ -1,0 +1,34 @@
+{
+  "summary": {
+    "video": "data\\监火员离岗测试.mp4",
+    "fps": 29.99227202472952,
+    "total_frames": 3881,
+    "leave_timeout_s": 10.0,
+    "conf_thres": 0.45,
+    "model": "YOLOv8s + HSV颜色面积占比 + ByteTrack",
+    "inference_fps": 30.2
+  },
+  "leave_monitor": {
+    "summary": {
+      "total_frames": 3881,
+      "fps": 29.99227202472952,
+      "total_duration_s": 129.4,
+      "timeout_s": 10.0,
+      "warmup_s": 5.0,
+      "total_alerts": 1
+    },
+    "alerts": [
+      {
+        "type": "warn",
+        "content": "警告:监火员离岗",
+        "time_s": 96.6,
+        "leave_duration_s": 10.0
+      },
+      {
+        "type": "clear",
+        "content": "监火员返回岗位",
+        "time_s": 104.3
+      }
+    ]
+  }
+}

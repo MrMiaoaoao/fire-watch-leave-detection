@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "video": "data\\监火员离岗测试3.mp4",
+    "fps": 25.0,
+    "total_frames": 9318,
+    "leave_timeout_s": 10.0,
+    "conf_thres": 0.45,
+    "model": "YOLOv8s + HSV颜色面积占比 + ByteTrack",
+    "inference_fps": 36.7
+  },
+  "leave_monitor": {
+    "summary": {
+      "total_frames": 9318,
+      "fps": 25.0,
+      "total_duration_s": 372.7,
+      "timeout_s": 10.0,
+      "warmup_s": 5.0,
+      "total_alerts": 0
+    },
+    "alerts": []
+  }
+}

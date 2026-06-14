@@ -1,16 +1,16 @@
 # Fire Watch Leave Detection
 
-监火员离岗检测项目，当前版本重点关注远景红/黄背心识别和离岗检测泛化。近景身份确认交给人脸识别模块，不继续优化近景颜色抖动。
+监火员离岗检测项目。当前版本只关注远景红/黄背心识别和离岗检测泛化；近景身份确认交给人脸识别模块，不继续优化近景颜色抖动。
 
 ## 当前版本
 
-- 颜色分类器：`color_classifier.py`
-- 当前关键版本：v2.6.4 ROI restore
-- 离岗检测：`leave_detector.py`
+- 版本标记：v2.6.4 ROI restore
 - 主流程：`full_pipeline.py`
-- 检测模型：YOLOv8s + ByteTrack + HSV 背心颜色分类
+- 颜色分类：`color_classifier.py`
+- 离岗检测：`leave_detector.py`
+- 检测方案：YOLOv8s + ByteTrack + HSV 背心颜色分类 + 离岗告警
 
-当前 `ALL_ROIS` 使用远景更稳的 v2.6.4 多区域上半身 ROI：
+当前 `color_classifier.py` 使用远景更稳的 v2.6.4 上半身多 ROI：
 
 ```python
 (0.18, 0.65, 0.20, 0.80)
@@ -26,19 +26,54 @@
 
 该逻辑用于防止短时误红清除离岗告警。
 
-## 目录
+## 模型权重
+
+模型权重不提交到普通 GitHub 仓库，需要本地自行放入 `models/` 目录。
+
+当前主流程默认读取：
 
 ```text
-full_v2/
-  full_pipeline.py
-  color_classifier.py
-  leave_detector.py
-  requirements.txt
-  操作说明.md
-  data/       # 本地放测试视频，不提交 mp4
-  models/     # 本地放 YOLO 权重，不提交 pt
-  outputs/    # 提交 JSON/JSONL 结果，不提交输出视频
+models/yolov8s.pt
 ```
+
+可选备用权重：
+
+```text
+models/yolov8n.pt
+models/yolov8l.pt
+models/yolov8l-worldv2_vest_finetuned.pt
+```
+
+注意：
+
+- `models/*.pt` 已被 `.gitignore` 忽略。
+- 如果缺少 `models/yolov8s.pt`，运行 `full_pipeline.py` 会直接报 `FileNotFoundError`。
+- 建议将权重文件放在网盘、服务器或 GitHub Release 中归档，不要直接提交到 git。
+
+## 数据与输出
+
+测试视频不提交到普通 GitHub 仓库，需要本地放入 `data/` 目录：
+
+```text
+data/监火员离岗测试.mp4
+data/监火员离岗测试2.mp4
+data/监火员离岗测试3.mp4
+data/监火员离岗测试4.mp4
+```
+
+输出目录：
+
+```text
+outputs/
+```
+
+会生成：
+
+- `*_result.json`：摘要报告
+- `*_result.jsonl`：逐帧结果
+- `*_output.mp4`：标注视频
+
+其中 `outputs/*_output.mp4` 不提交到 GitHub；当前仓库保留 JSON/JSONL 结果用于复查。
 
 ## 环境
 
@@ -49,13 +84,15 @@ conda activate yolo
 pip install -r requirements.txt
 ```
 
-本项目当前验证使用：
+当前验证环境：
 
 - `ultralytics 8.4.60`
 - `opencv-python 4.13.0`
 - CUDA 可用
 
 ## 运行
+
+在项目根目录运行：
 
 ```powershell
 python full_pipeline.py "data\监火员离岗测试.mp4"
@@ -64,13 +101,13 @@ python full_pipeline.py "data\监火员离岗测试3.mp4"
 python full_pipeline.py "data\监火员离岗测试4.mp4"
 ```
 
-输出：
+如果只做快速连通性验证：
 
-- `outputs/*_result.json`
-- `outputs/*_result.jsonl`
-- `outputs/*_output.mp4`
-
-注意：`*_output.mp4` 不提交到 GitHub。
+```powershell
+$env:MAX_FRAMES="5"
+python full_pipeline.py "data\监火员离岗测试2.mp4"
+Remove-Item Env:MAX_FRAMES
+```
 
 ## 当前四个测试结果
 
@@ -83,12 +120,20 @@ python full_pipeline.py "data\监火员离岗测试4.mp4"
 | `监火员离岗测试3.mp4` | 0 | 无 | 无 |
 | `监火员离岗测试4.mp4` | 4 | `13.5s`, `81.3s`, `123.5s`, `152.3s` | `34.2s`, `100.9s`, `138.4s`, `166.1s` |
 
-## 大文件说明
+## GitHub 收录范围
 
-以下文件不进入普通 git 仓库：
+提交到 GitHub：
+
+- 代码：`*.py`
+- 文档：`README.md`、`操作说明.md`、`AGENTS.md`
+- 环境：`requirements.txt`
+- 结果摘要：`outputs/*_result.json`
+- 逐帧结果：`outputs/*_result.jsonl`
+- 占位说明：`data/README.md`、`models/README.md`
+
+不提交：
 
 - `data/*.mp4`
 - `models/*.pt`
 - `outputs/*_output.mp4`
-
-如果需要完整复现实验，请从外部归档位置恢复视频和权重到对应目录。
+- `__pycache__/`

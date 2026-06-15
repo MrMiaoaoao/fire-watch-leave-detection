@@ -143,6 +143,12 @@ python -m unittest discover -s tests -p "test_*.py"
 powershell -ExecutionPolicy Bypass -File scripts\run_unit_tests.ps1 -Python "C:\Users\22260\.conda\envs\yolo\python.exe"
 ```
 
+运行项目级轻量检查：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\check_project.ps1 -Python "C:\Users\22260\.conda\envs\yolo\python.exe"
+```
+
 ## 当前四个测试结果
 
 重新生成时间：2026-06-14

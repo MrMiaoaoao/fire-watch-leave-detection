@@ -101,12 +101,39 @@ python full_pipeline.py "data\监火员离岗测试3.mp4"
 python full_pipeline.py "data\监火员离岗测试4.mp4"
 ```
 
+常用参数：
+
+```powershell
+python full_pipeline.py "data\监火员离岗测试2.mp4" --max-frames 5
+python full_pipeline.py "data\监火员离岗测试2.mp4" --output-suffix "_probe"
+python full_pipeline.py "data\监火员离岗测试2.mp4" --weights "models\yolov8s.pt"
+python full_pipeline.py "data\监火员离岗测试2.mp4" --device cpu --max-frames 1
+```
+
 如果只做快速连通性验证：
 
 ```powershell
 $env:MAX_FRAMES="5"
 python full_pipeline.py "data\监火员离岗测试2.mp4"
 Remove-Item Env:MAX_FRAMES
+```
+
+一键复跑四个测试：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_all_tests.ps1 -Python "C:\Users\22260\.conda\envs\yolo\python.exe"
+```
+
+显存紧张时可用 CPU 做 smoke test：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_all_tests.ps1 -Python "C:\Users\22260\.conda\envs\yolo\python.exe" -Device cpu -MaxFrames 1 -OutputSuffix "_probe"
+```
+
+汇总并校验当前四测结果：
+
+```powershell
+python scripts\summarize_results.py --strict-current
 ```
 
 ## 当前四个测试结果

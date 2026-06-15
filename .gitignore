@@ -9,6 +9,8 @@ models/*.pt
 
 # Keep JSON/JSONL reports, ignore rendered videos.
 outputs/*_output.mp4
+outputs/*probe*_result.json
+outputs/*probe*_result.jsonl
 
 .DS_Store
 Thumbs.db

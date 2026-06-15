@@ -3,7 +3,7 @@ import unittest
 import cv2
 import numpy as np
 
-from color_classifier import ALL_ROIS, classify, classify_batch_scored
+from color_classifier import ALL_ROIS, COLOR_RED, COLOR_YELLOW, classify, classify_batch_scored
 
 
 def synthetic_person(base_bgr, accent_bgr=None):
@@ -27,18 +27,22 @@ class ColorClassifierTest(unittest.TestCase):
             (0.15, 0.60, 0.45, 0.92),
         ])
 
+    def test_color_constants_contract(self):
+        self.assertEqual(COLOR_RED, "red")
+        self.assertEqual(COLOR_YELLOW, "yellow")
+
     def test_yellow_base_classifies_as_worker(self):
         crop = synthetic_person((0, 230, 230))
         result = classify(crop)
         self.assertIsNotNone(result)
-        self.assertEqual(result["color"], "yellow")
+        self.assertEqual(result["color"], COLOR_YELLOW)
         self.assertGreater(result["yellow_ratio"], 0.1)
 
     def test_red_base_with_yellow_stripes_classifies_as_supervisor(self):
         crop = synthetic_person((0, 0, 220), accent_bgr=(0, 230, 230))
         result = classify(crop)
         self.assertIsNotNone(result)
-        self.assertEqual(result["color"], "red")
+        self.assertEqual(result["color"], COLOR_RED)
 
     def test_blank_crop_returns_none(self):
         crop = np.full((160, 80, 3), 40, dtype=np.uint8)
@@ -48,7 +52,7 @@ class ColorClassifierTest(unittest.TestCase):
         crops = [synthetic_person((0, 230, 230)), synthetic_person((0, 0, 220), accent_bgr=(0, 230, 230))]
         results = classify_batch_scored(crops)
         self.assertEqual(len(results), 2)
-        self.assertEqual([r["color"] for r in results], ["yellow", "red"])
+        self.assertEqual([r["color"] for r in results], [COLOR_YELLOW, COLOR_RED])
 
 
 if __name__ == "__main__":

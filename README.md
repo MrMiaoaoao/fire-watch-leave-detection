@@ -136,6 +136,13 @@ powershell -ExecutionPolicy Bypass -File scripts\run_all_tests.ps1 -Python "C:\U
 python scripts\summarize_results.py --strict-current
 ```
 
+运行无模型依赖的单元测试：
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py"
+powershell -ExecutionPolicy Bypass -File scripts\run_unit_tests.ps1 -Python "C:\Users\22260\.conda\envs\yolo\python.exe"
+```
+
 ## 当前四个测试结果
 
 重新生成时间：2026-06-14

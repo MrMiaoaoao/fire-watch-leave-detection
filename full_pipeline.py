@@ -44,6 +44,27 @@ class PipelineConfig:
     device: str = ""
 
 
+@dataclass
+class TrackState:
+    x1: int
+    y1: int
+    x2: int
+    y2: int
+    last_frame: int
+    color_history: deque
+    locked_color: str | None = None
+    last_final: str | None = None
+    stable_count: int = 0
+    unlock_count: int = 0
+
+    def update_box(self, x1, y1, x2, y2, frame_idx):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.last_frame = frame_idx
+
+
 LABEL_CACHE = {}
 
 
@@ -331,39 +352,34 @@ def run_pipeline(config: PipelineConfig):
                     raw_dets = []
                     for (ix1, iy1, ix2, iy2, conf, tid), score_data in zip(person_data, scored):
                         if tid not in known:
-                            known[tid] = [
-                                ix1,
-                                iy1,
-                                ix2,
-                                iy2,
-                                idx,
-                                deque(maxlen=config.vote_window),
-                                None,
-                                None,
-                                0,
-                                0,
-                            ]
+                            known[tid] = TrackState(
+                                x1=ix1,
+                                y1=iy1,
+                                x2=ix2,
+                                y2=iy2,
+                                last_frame=idx,
+                                color_history=deque(maxlen=config.vote_window),
+                            )
                         else:
-                            track = known[tid]
-                            track[0:4] = [ix1, iy1, ix2, iy2]
-                            track[4] = idx
+                            known[tid].update_box(ix1, iy1, ix2, iy2, idx)
 
                         color = score_data["color"] if score_data else None
-                        known[tid][5].append(color)
-                        hist = list(known[tid][5])
+                        track = known[tid]
+                        track.color_history.append(color)
+                        hist = list(track.color_history)
                         final_color = vote_color(hist, config.vote_thres)
 
                         if final_color is not None:
-                            if final_color == known[tid][7]:
-                                known[tid][8] += 1
+                            if final_color == track.last_final:
+                                track.stable_count += 1
                             else:
-                                known[tid][8] = 1
-                            known[tid][7] = final_color
+                                track.stable_count = 1
+                            track.last_final = final_color
 
-                        locked = known[tid][6]
-                        if locked is None and known[tid][8] >= config.lock_consec and final_color is not None:
-                            known[tid][6] = final_color
-                            known[tid][9] = 0
+                        locked = track.locked_color
+                        if locked is None and track.stable_count >= config.lock_consec and final_color is not None:
+                            track.locked_color = final_color
+                            track.unlock_count = 0
 
                         if locked is not None and final_color is not None:
                             score = score_data["score"] if score_data else 0
@@ -371,18 +387,18 @@ def run_pipeline(config: PipelineConfig):
                                 opposite_raw = sum(1 for c in hist if c == final_color)
                                 same_raw = sum(1 for c in hist if c == locked)
                                 if opposite_raw > same_raw and score > config.switch_margin:
-                                    known[tid][9] += 1
+                                    track.unlock_count += 1
                                 else:
-                                    known[tid][9] = 0
-                                if known[tid][9] >= config.unlock_consec:
-                                    known[tid][6] = None
-                                    known[tid][9] = 0
-                                    known[tid][8] = 1
+                                    track.unlock_count = 0
+                                if track.unlock_count >= config.unlock_consec:
+                                    track.locked_color = None
+                                    track.unlock_count = 0
+                                    track.stable_count = 1
                             else:
-                                known[tid][9] = 0
+                                track.unlock_count = 0
 
-                        if known[tid][6] is not None:
-                            final_color = known[tid][6]
+                        if track.locked_color is not None:
+                            final_color = track.locked_color
                         if final_color is not None:
                             score = score_data["score"] if score_data else 0
                             raw_dets.append({
@@ -407,7 +423,7 @@ def run_pipeline(config: PipelineConfig):
                             yellow_count += 1
                         detections.append(det)
 
-            gone = [tid for tid, track in known.items() if track[4] < idx - 60]
+            gone = [tid for tid, track in known.items() if track.last_frame < idx - 60]
             for tid in gone:
                 del known[tid]
 
